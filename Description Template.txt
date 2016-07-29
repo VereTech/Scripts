@@ -1,0 +1,24 @@
+<# 
+  .SYNOPSIS 
+  Describe the function here 
+  .DESCRIPTION
+  Describe the function in more detail 
+  .EXAMPLE 
+  Give an example of how to use it 
+  .EXAMPLE 
+  Give another example of how to use it 
+  .PARAMETER computername 
+  The computer name to query. Just one. 
+  .PARAMETER logname 
+  The name of a file to write failed computer names to. Defaults to errors.txt.
+  .COMPATIBILITY
+  Mark the archetecture of the OS the script has been tested on, for example if the 
+  script works on both x64 and x86 versions of Windows 10, then; Windows 10 = x64 x86
+  Windows 10    =
+  Windows 8.1   =
+  Windows 8     =
+  Windows 7     =
+  Windows Vista =
+  Windows XP    =
+  Windows 2000  =
+  #>
