@@ -1,5 +1,4 @@
-﻿
-<#
+﻿<#
   .SYNOPSIS
   Report a list of local user accounts
   .DESCRIPTION
@@ -7,6 +6,7 @@
   .EXAMPLE
   Get-LocalAccountList
   #>
+
 $ExitCode = "0"
 $users = ""
 $users = get-wmiobject win32_useraccount –computername $computer
