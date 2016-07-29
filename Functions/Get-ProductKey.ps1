@@ -1,4 +1,4 @@
-﻿function Get-ProductKey {
+﻿function Get-WindowsProductKey {
      <#   
     .SYNOPSIS   
         Retrieves the product key and OS information from a local or remote system/s.
