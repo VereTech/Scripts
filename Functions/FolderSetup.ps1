@@ -1,4 +1,5 @@
-﻿<# 
+﻿function FolderSetup {
+<# 
   .SYNOPSIS 
   Setups folder Sctructure under C:\                 \    VereTech              \    Tools   
                                  $env:SystemDrive    \    $CompanyFolderName    \    $CompanySubFolders
@@ -7,8 +8,7 @@
   Sub folders can be entered with a "\" to create further sub folders, for example "Tools\Putty"
   .EXAMPLE 
   FolderSetup -CompanyFolderName "VereTech" -CompanySubFolders "Tools\Install","Tools\Download","Packages\Adobe"
-  #> 
-function FolderSetup {
+  #>
 #
 # Parameters
 #

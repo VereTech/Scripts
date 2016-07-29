@@ -1,4 +1,5 @@
-﻿<# 
+﻿function Is-Installed( $IsApp ) {
+<# 
   .SYNOPSIS 
   Search for installed Applications where the application name is "like" the passed parameter.
   This uses the registry to conduct its search instead of WMIC. 
@@ -11,8 +12,6 @@
   .PARAMETER IsApp
   The application name to search for. 
   #>
-
-function Is-Installed( $IsApp ) {
     
     $x86 = ((Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall") |
         Where-Object { $_.GetValue( "DisplayName" ) -like "*$IsApp*" } ).Length -gt 0;

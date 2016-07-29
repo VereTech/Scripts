@@ -1,4 +1,5 @@
-﻿<# 
+﻿function EventLogClearedRecently {
+<# 
   .SYNOPSIS 
   Checks to see if the System, Security or Application EventLogs have been cleared within the last week.
   .DESCRIPTION
@@ -8,8 +9,6 @@
   .EXAMPLE
   EventLogClearedRecently
   #>
-
-function EventLogClearedRecently {
 
 $Date = Get-Date
 $TimeFrame = $Date.AddDays(-7)

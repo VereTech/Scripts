@@ -1,4 +1,5 @@
-﻿<# 
+﻿function Start-System-Executable {
+<# 
   .SYNOPSIS 
   Starts a system process
   .DESCRIPTION
@@ -16,7 +17,6 @@
   Optional
   A string of arguments to send to process, for example "C:" or "localhost" or "/silent"
   #>
-function Start-System-Executable {
                                 param(
                                   [String] $FilePath,
                                   [String[]] $ArgumentList

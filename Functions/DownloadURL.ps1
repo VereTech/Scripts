@@ -1,4 +1,5 @@
-﻿<# 
+﻿function DownloadURL {
+<# 
   .SYNOPSIS 
   Attempts to download a file from a URL using multiple different methods to get the job done
   .DESCRIPTION 
@@ -25,7 +26,6 @@
   .PARAMETER OutputFfile
   The file name in which to save the file as
   #> 
-function DownloadURL {
 param(
 [Parameter(Mandatory=$true)]
 [string]$URL,

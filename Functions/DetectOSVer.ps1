@@ -1,4 +1,5 @@
-﻿<# 
+﻿function DetectOSVer {
+<# 
   .SYNOPSIS 
   Detects OS Version
   .DESCRIPTION 
@@ -14,7 +15,6 @@
   $OSVersion = DetectOSVer
   Write-Host $OSVersion[4]
   #>
-function DetectOSVer {
 $OSMajor = [System.Environment]::OSVersion.Version.Major
 $OSMinor = [System.Environment]::OSVersion.Version.Minor
 $OSBuild = [System.Environment]::OSVersion.Version.Build
