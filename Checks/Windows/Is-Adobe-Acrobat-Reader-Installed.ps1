@@ -47,7 +47,7 @@ if ($PassedSearch -ge 3) {
     exit 0
 
 }
-
+Write-Host $PassedSearch
 } # End Try
 
 Catch {
