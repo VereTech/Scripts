@@ -158,27 +158,30 @@ if ($Query6 -eq $name) {
 if ($ChecksPassed -eq 6) {
 
     Write-Output "$date : This system has been branded as '$OEMManufacturer'" | Out-File -Append $logfile
+    Write-Output "$date : Registry entries look like this:" | Out-File -Append $logfile
+    Write-Output "$date : Manufacturer  = $Query1" | Out-File -Append $logfile
+    Write-Output "$date : Support Hours = $Query2" | Out-File -Append $logfile
+    Write-Output "$date : Support Phone = $Query3" | Out-File -Append $logfile
+    Write-Output "$date : Support WWW   = $Query4" | Out-File -Append $logfile
+    Write-Output "$date : End User Note = $Query5" | Out-File -Append $logfile
+    Write-Output "$date : Logo File     = $Query6" | Out-File -Append $logfile
 
     Write-Host "This system has been branded as '$OEMManufacturer'"
-    Write-Host "Manufacturer  = $Query1"
-    Write-Host "Support Hours = $Query2"
-    Write-Host "Support Phone = $Query3"
-    Write-Host "Support WWW   = $Query4"
-    Write-Host "End User Note = $Query5"
-    Write-Host "Logo File     = $Query6"
     exit 0
 
 } else {
 
     Write-Output "$date : $ChecksPassed out of 6 branding options where applied" | Out-File -Append $logfile
+    Write-Output "$date : Registry entries look like this:" | Out-File -Append $logfile
+    Write-Output "$date : Manufacturer  = $Query1" | Out-File -Append $logfile
+    Write-Output "$date : Support Hours = $Query2" | Out-File -Append $logfile
+    Write-Output "$date : Support Phone = $Query3" | Out-File -Append $logfile
+    Write-Output "$date : Support WWW   = $Query4" | Out-File -Append $logfile
+    Write-Output "$date : End User Note = $Query5" | Out-File -Append $logfile
+    Write-Output "$date : Logo File     = $Query6" | Out-File -Append $logfile
 
     Write-Host "$ChecksPassed out of 6 branding options where applied"
-    Write-Host "Manufacturer  = $Query1"
-    Write-Host "Support Hours = $Query2"
-    Write-Host "Support Phone = $Query3"
-    Write-Host "Support WWW   = $Query4"
-    Write-Host "End User Note = $Query5"
-    Write-Host "Logo File     = $Query6"
+    
     exit 1001
 
 }
