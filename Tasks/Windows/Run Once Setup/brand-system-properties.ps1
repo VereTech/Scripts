@@ -59,6 +59,13 @@ $OEMInformation = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformatio
 
 # Brand the System Panel
 # Change the Registry Keys
+
+if (!(Test-Path "$OEMInformation")) {
+
+    New-Item -Path $OEMInformation
+
+}
+
 Set-ItemProperty "$OEMInformation" -name "Manufacturer" -value "$OEMManufacturer"
 Set-ItemProperty "$OEMInformation" -name "SupportHours" -value "$OEMSupportHours"
 Set-ItemProperty "$OEMInformation" -name "SupportPhone" -value "$OEMSupportPhone"
