@@ -16,7 +16,10 @@ param (
 [string]$MSPSwitches = ""                                                  # Switches to pass to installer file if MSP
 )
 
-
+$logfile = "$env:SystemDrive\VereTech\Log.txt"
+$date = date
+Write-Output "--------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
+Write-Output "$date : Starting 'deploy-url-os-specific.ps1'" | Out-File -Append $logfile
 
 #
 # SETUP
@@ -46,73 +49,6 @@ $URL = @{
 # Functions
 #
 
-<# 
-  .SYNOPSIS 
-  Setups folder Sctructure under C:\                   \    VereTech             \    Tools   
-                                 $CompanyFolderDrive   \    $CompanyFolderName   \    $CompanySubFolders
-
-  .DESCRIPTION 
-  Sub folders can be entered with a "\" to create further sub folders, for example "Tools\Putty"
-  .EXAMPLE 
-  FolderSetup -CompanyFolderName "VereTech"
-  #> 
-function FolderSetup {
-#
-# Parameters
-#
-param(
-[string]$CompanyFolderName
-)
-
-#
-# SETUP
-#
-$CompanySubFolders = @(
-    "Tools",
-    "Scripts",
-    "Packages"
-)
-
-$CompanyFolderDrive = $env:SystemDrive
-
-#
-# Execute
-#
-if ($CompanyFolderName -eq "") {
-
-    Write-Warning "Please pass the Root folder name using parameter -CompanyFolderName"
-    return "FALSE"
-
-}
-
-foreach ($CompanySubFolder in $CompanySubFolders) {
-    if (!(Test-Path "$CompanyFolderDrive\$CompanyFolderName\$CompanySubFolder")) {
-        New-Item -Path "$CompanyFolderDrive\$CompanyFolderName\$CompanySubFolder" -ItemType Directory|Out-Null
-    }
-}
-$FolderCount = 0
-foreach ($CompanySubFolder in $CompanySubFolders) {
-    $FolderCount++
-}
-
-
-$FolderCountSuccess = 0
-foreach ($CompanySubFolder in $CompanySubFolders) {
-    if (Test-Path "$CompanyFolderDrive\$CompanyFolderName\$CompanySubFolder") {
-        $FolderCountSuccess++
-    }
-}
-if ("$FolderCountSuccess" -eq "$FolderCount") {
-
-    return "TRUE"
-
-} else {
-    
-    return "FALSE"
-
-}
-
-} # End Function
 <# 
   .SYNOPSIS 
   Detects OS Version
@@ -253,9 +189,8 @@ if ((Test-Path $OutputFolder\$OutputFile)) {
 Try {
 
 # Run Pre-Reqs
+Write-Output "$date : Detecting OS version" | Out-File -Append $logfile
 $OSVer = DetectOSver
-$FolderSetup = FolderSetup -CompanyFolderName "$CompanyFolderName" |Out-Null
-
 
 # Null future used values
 $InstallFile = $null
@@ -272,45 +207,65 @@ $v1 = $OSVer[1]
 $v4 = $OSver[4]
 $v = "$v0 . $v1 . $v4"
 $vURL = $URL[$v]
-
+Write-Output "$date : Detected OS version is $v" | Out-File -Append $logfile
 # Fail Script for some conditions
 if ($v -eq "") {
     
+    Write-Output "$date : Cannot detect operating system version" | Out-File -Append $logfile
     Write-Host "Cannot detect operating system version"
     exit 1001
 
 } elseif ($vURL -eq "") {
 
+    Write-Output "OS not supported, URL not specified" | Out-File -Append $logfile
     Write-Host "OS not supported, URL not specified"
     exit 1001
 
 }
 
+Write-Output "$date : Detected OS version is $v" | Out-File -Append $logfile
+
 # Set Download URL
-$InstallFile = DownloadURL -URL "$vURL" -OutputFolder "$PackageFolder"   
+Write-Output "$date : Beginning to download '$vURL' to '$PackageFolder'" | Out-File -Append $logfile
+$InstallFile = DownloadURL -URL "$vURL" -OutputFolder "$PackageFolder"
+   
        
 if ($InstallFile -eq "FALSE") {
 
+    Write-Output "$date : Download Failed" | Out-File -Append $logfile
     Write-Host "Download Failed"
     exit 1001
 
 }
 # Get file extension that is thrown back from the DownloadURL function and place the filename extension into a variable, which by setting this variable initiates the download.
+
+Write-Output "$date : Getting file extension of '$InstallFile' using System.IO.Path" | Out-File -Append $logfile
+
 $InstallFileExt = [System.IO.Path]::GetExtension("$InstallFile")
 
+Write-Output "$date : File type is '$InstallFileExt'" | Out-File -Append $logfile
+
 # Start the install process
+
 if ($InstallFileExt -eq ".exe") {
 
+    Write-Output "$date : Starting install for file type '$InstallFileExt' using $InstallFile $EXESwitches" | Out-File -Append $logfile
     $StartInstall = Start-Process $InstallFile $EXESwitches -PassThru -Wait
     
     if ($StartInstall.ExitCode -eq "0") {
 
+        Write-Output "$date : Installation completed successfully" | Out-File -Append $logfile
         Write-Host "Installation completed successfully"
         exit 0
 
     } elseif ($StartInstall.ExitCode -ge "1") {
 
+        Write-Output "$date : Installation of $InstallFile failed" | Out-File -Append $logfile
+        Write-Output $date $StartInstall.ExitCode | Out-File -Append $logfile
         Write-Host "Installation of $InstallFile failed"
+        Write-Host $StartInstall.ExitCode
+
+
         exit 1001
 
     }
@@ -319,16 +274,21 @@ if ($InstallFileExt -eq ".exe") {
 
 if ($InstallFileExt -eq ".msi") {
 
+    Write-Output "$date : Starting install for file type '$InstallFileExt' using $InstallFile $MSISwitches" | Out-File -Append $logfile
+
     $StartInstall = Start-Process msiexec /i $InstallFile $MSISwitches -PassThru -Wait
     if ($StartInstall.ExitCode -eq "0") {
 
+        Write-Output "$date : Installation completed successfully" | Out-File -Append $logfile
         Write-Host "Installation of $InstallFile completed successfully"
         exit 0
 
     } elseif ($StartInstall.ExitCode -ge "1") {
 
+        Write-Output "$date : Installation of $InstallFile failed" | Out-File -Append $logfile
+        Write-Output $date $StartInstall.ExitCode | Out-File -Append $logfile
         Write-Host "Installation of $InstallFile failed"
-        exit 1001
+        Write-Host $StartInstall.ExitCode
 
     }
     
@@ -337,16 +297,21 @@ if ($InstallFileExt -eq ".msi") {
 
 if ($InstallFileExt -eq ".msp") {
 
+    Write-Output "$date : Starting install for file type '$InstallFileExt' using $InstallFile $MSPSwitches" | Out-File -Append $logfile
     $StartInstall = Start-Process msiexec /update $InstallFile $MSPSwitches -PassThru -Wait
+
     if ($StartInstall.ExitCode -eq "0") {
 
+        Write-Output "$date : Installation completed successfully" | Out-File -Append $logfile
         Write-Host "Installation completed successfully"
         exit 0
 
     } elseif ($StartInstall.ExitCode -ge "1") {
 
+        Write-Output "$date : Installation of $InstallFile failed" | Out-File -Append $logfile
+        Write-Output $date $StartInstall.ExitCode | Out-File -Append $logfile
         Write-Host "Installation of $InstallFile failed"
-        exit 1001
+        Write-Host $StartInstall.ExitCode
 
     }
     
@@ -356,6 +321,8 @@ if ($InstallFileExt -eq ".msp") {
 } # End Try
 
 Catch {
+
 Write-Host "Installation Failed"
 exit 1001
+
 } # End Catch
