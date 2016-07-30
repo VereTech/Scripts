@@ -18,7 +18,6 @@ param(
 [string]$Drives
 
 )
-
 <# 
   .SYNOPSIS 
   Starts a system process
@@ -67,25 +66,34 @@ function Start-Executable {
                                     /c exit $process.ExitCode
                                 }
                               }
-
+$logfile = "$env:SystemDrive\VereTech\Log.txt"
+$date = date
+Write-Output "--------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
+Write-Output "$date : Starting 'CHKDSK.ps1'" | Out-File -Append $logfile
 Try {
+
 if ($Drives -eq "") {
 
+    Write-Output "$date : Getting a list of local disks" | Out-File -Append $logfile
     $Drives = get-wmiobject win32_logicaldisk -filter "drivetype=3" | select-object -expandproperty name
-
+    
 }
 
+Write-Output "$date : Going to run CHKDSK on $Drives" | Out-File -Append $logfile
 $DriveNumber = 0
 $DrivesChecked = 0
+
 foreach ($Drive in $Drives) {
 
     $DriveNumber++
-    $process = Start-Executable "chkdsk" "$drive /r /x"
+    Write-Output "$date : Starting CHKDSK on $Drive" | Out-File -Append $logfile
+    $process = Start-Executable "chkdsk" "$Drive /r /x"
+    Write-Output "$date : Finished running CHKDSK on $Drive" | Out-File -Append $logfile
 
 
 }
-
-Write-Host "CHKDSK of $DriveNumber Drives Complete"
+Write-Output "CHKDSK on $DriveNumber Drives Complete" | Out-File -Append $logfile
+Write-Host "CHKDSK on $DriveNumber Drives Complete"
 exit 0
 
 } # End Try
@@ -96,6 +104,7 @@ exit 0
 
 Catch {
 
+Write-Output "CHKDSK Failed" | Out-File -Append $logfile
 Write-Host "CHKDSK Failed"
 exit 1001
 

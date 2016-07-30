@@ -17,12 +17,11 @@ param (
 [String]$OEMLine1 = "Contact our Help Desk for computer problems",                                                     # Note to display to end users
 [String]$LogoURL = "https://www.vere-tech.net.au/images/sysprop.bmp"                                                      # The URL to .bmp or .jpg Logo
 )
+
 $logfile = "$env:SystemDrive\VereTech\Log.txt"
 $date = date
 Write-Output "--------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
 Write-Output "$date : Starting 'branding system properties.ps1'" | Out-File -Append $logfile
-
-#Write-Output "$date : " | Out-File -Append $logfile
 
 Try {
 
