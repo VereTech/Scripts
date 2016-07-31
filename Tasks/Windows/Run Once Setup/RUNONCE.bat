@@ -191,6 +191,38 @@ REM Set the execution policy for powershell to RemoteSigned from any value
 	echo Setting Powershells ExecutionPolicy to RemoteSigned>>%LOG%
 	REG ADD "HKLM\Software\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell" /v ExecutionPolicy /d RemoteSigned /t REG_SZ /f
 
+REM Ensure windows passwords are not storing reversable hash's
+echo.>>%LOG%
+echo Ensuring PC is protected against NoLMHash vulverability>>%LOG%
+setlocal
+reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash>>%LOG%
+if not %ERRORLEVEL% == 0 (
+	for /f "tokens=2*" %a in ('reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash') do set "var=%b"
+	if "%var%"=="0x1" (
+		echo PC is already protected>>%LOG%
+		) else (
+			echo Adding NoLMHash protection>>%LOG%
+			reg add HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash /t REG_DWORD /d 0x1>>%LOG%
+			if %ERRORLEVEL% == 0 (
+				echo PC is now protected>>%LOG%
+				) else (
+					echo Failed to set NoLMHash protection>>%LOG%
+					exit 1001
+					)
+				)
+		) else (
+			echo Adding NoLMHash protection>>%LOG%
+			reg add HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash /t REG_DWORD /d 0x1>>%LOG%
+			if %ERRORLEVEL% == 0 (
+				echo PC is now protected>>%LOG%
+				) else (
+					echo Failed to set NoLMHash protection>>%LOG%
+					exit 1001
+					)
+				)
+		
+
+
 REM Cleanup and Exit success
 	echo Starting the cleanup now >>%LOG%
 	del /q /f %DLOAD_SCRIPT%
