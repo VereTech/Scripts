@@ -38,8 +38,10 @@ Write-host "--------------------------------------------------------------------
 
 for the end of every script
 Write-host "----------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
-Write-host "$date : $scriptname : 'FINISH'" | Out-File -Append $logfile
+Write-host "$date : $scriptname : 'FINISH' : 'FAIL' or 'PASS' or 'CATCH FAIL'" | Out-File -Append $logfile
 Write-host "----------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
+
+
 
 for every entry
 Write-host "$date : $scriptname : 'Messege'" | Out-File -Append $logfile
