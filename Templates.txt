@@ -1,4 +1,4 @@
-USE THIS TO DESCIBE YOUR SCRIPTS
+USE THIS TO DESCIBE YOUR SCRIPTS/FUNCTIONS
 
 <# 
   .SYNOPSIS 
@@ -24,24 +24,3 @@ USE THIS TO DESCIBE YOUR SCRIPTS
   Windows XP    =
   Windows 2000  =
   #>
-
-
-USE THIS TO SETUP LOCAL LOGGING IN YOUR POWERSHELL SCRIPTS
-
-$logfile = $env:SystemDrive\VereTech\Log.txt
-$date = Get-Date
-
-for the start of every script
-Write-host "----------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
-Write-host "$date : $scriptname : 'START'" | Out-File -Append $logfile
-Write-host "----------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
-
-for the end of every script
-Write-host "----------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
-Write-host "$date : $scriptname : 'FINISH' : 'FAIL' or 'PASS' or 'CATCH FAIL'" | Out-File -Append $logfile
-Write-host "----------------------------------------------------------------------------------------------------" | Out-File -Append $logfile
-
-
-
-for every entry
-Write-host "$date : $scriptname : 'Messege'" | Out-File -Append $logfile
