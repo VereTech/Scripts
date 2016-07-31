@@ -16,6 +16,7 @@ REM Setup Logging
 	echo Company Name : %COMPANYNAME%>>%LOG%
 	echo Company Folder : %COMPANYFOLDER%>>%LOG%
 	echo.>>%LOG%
+
 REM Setup folders
 	echo Setting up folders>>%LOG%
 	if not exist %COMPANYFOLDER%\Tools (
@@ -145,8 +146,7 @@ REM If PowerShell 2 is not installed, download and install it.
 			) else (
 				echo .NET 2.0 SP1 is now installed >>%LOG%
 				)
-		
-		
+
 	REM Download powershell 2
 		:download
 		echo Checking if I already downloaded Powershell 2 installer previously >>%LOG%
@@ -171,10 +171,8 @@ REM If PowerShell 2 is not installed, download and install it.
 			exit 1001
 			) else (
 				echo PowerShell 2 is now installed >>%LOG%
+				goto :endxp
 				)
-
-
-		goto :endxp
 
 	REM Some exit failures
 		:not_xp_sp3
