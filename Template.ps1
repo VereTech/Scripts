@@ -32,17 +32,23 @@
 Param (
 # List the scripts parameters here
 )
+
 #
 # Setup, general configuration of script
 #
-    $Global:CompanyName = "VereTech"                    # The company name, this is the operating folder for all scripts, tools and packages, will be created under SYSTEMDRIVE
-    $Global:ScriptName = "ResetLocalAccountPassword.ps1"                    # Title of the script, used for logging and script identification
-    $Global:ScriptParameters = ""                    # List the scripts parameters here as variables such as $param0 $param1 $param2, if none, leave as ""
+    # Script setup
+$Global:CompanyName = "VereTech"                    # The company name, this is the operating folder for all scripts, tools and packages, will be created under SYSTEMDRIVE
+$Global:ScriptName = "ResetLocalAccountPassword.ps1"                    # Title of the script, used for logging and script identification
+$Global:ScriptParameters = ""                    # List the scripts parameters here as variables such as $param0 $param1 $param2, if none, leave as ""
 
-# Log file path
-    $Global:LogFileName = "Log.txt"                    # Filename to save the logfile as, "Log.txt" for example
-    $Global:CompanyFolder = "$env:SystemDrive\$Global:CompanyName"                    # 
-    $Global:LogFullPath = $Global:CompanyFolder + "\" + $Global:LogFileName                    #
+    # Log file path
+$Global:LogFileName = "Log.txt"                    # Filename to save the logfile as, "Log.txt" for example
+$Global:CompanyFolder = "$env:SystemDrive\$Global:CompanyName"                    # 
+$Global:LogFullPath = $Global:CompanyFolder + "\" + $Global:LogFileName                    #
+#
+# End of 'Setup, general configuration of script'
+#
+
 
 #
 # Pre-flight checks
@@ -51,17 +57,19 @@ Param (
 if (!($Global:ScriptParameters)) {
         $Global:ScriptParameters = "NONE"
     }
-
     # If company folder doesnt exist, warn and exit
 if (!(Test-Path "$Global:CompanyFolder")) {
-        Write-Warning "Need to run the RunOnce Script again, Company Folders do not exist."
+        Write-Warning "You need to run the RUNONCE Script again, Company Folders do not exist."
         exit 1001
     }
+#
+# End of 'Pre-flight checks'
+#
 
 #
 # List functions here
 #
-
+    # Logging functions
 Function Log-Start{
   <#
   .SYNOPSIS
@@ -202,7 +210,7 @@ Function Log-Error{
     $ErrorLine | Export-Csv -Path $Global:LogFullPath -Append -NoTypeInformation
   
     #Write to screen for debug mode
-    Write-Host (Get-Date) ": $Global:ScriptName : $Status : $Catagory : Error: An error has occurred [$Messege]."
+    Write-Host (Get-Date) ": $Global:ScriptName : $Status : $Catagory : An error has occurred [$Messege]."
         
     # call the Log-Finish and exit
     Log-Finish -status "$Status"
@@ -260,10 +268,11 @@ Function Log-Finish{
 
     $FinishLine | Export-Csv -Path $Global:LogFullPath -Append -NoTypeInformation
     #Write to host for debug mode
-    Write-Host (Get-Date) ": $Global:ScriptName : $Status : FINISH : Finished scripts using the following parameters : $Global:ScriptParameters"
-  
+    Write-Host (Get-Date) ": $Global:ScriptName : $Status : FINISH : Finished script using the following parameters : $Global:ScriptParameters"
+    exit 0
   }
 }
+    # Other functions
 function DetectOSVer {
 <# 
   .SYNOPSIS 
@@ -514,7 +523,168 @@ param(
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipFile, $XFolder)
 }
+function Check-LocalUserExist {
+[CmdletBinding()]
+param(
+[Parameter(Mandatory=$true)][string]$userName
+)
+Log-Write -Messege "Check-LocalUserExist initialised"
+Log-Write -Messege "Searching local accounts list for '$userName'"
+foreach ($i in Get-WmiObject -Class Win32_UserAccount -filter 'LocalAccount=true' | Select name) {
+    $searchuser = $i.Name
+    Log-Write -Messege "Trying to match '$searchuser' to '$userName'"
+    if($i.Name -eq "$userName") {        
+        Log-Write -Messege "Found local user account '$userName'"
+        return $true
+        } else {
+            Log-Write -Messege "'$searchuser' does not match '$userName'"
+            }
+    }
+Log-Write -Messege "Cannot find '$userName' in local accounts list" -Status 1001 -Catagory "WARNING"
+return $false 
+} # End Function
+function Check-LocalUserCredential {
+<#
+.Synopsis
+Verify Local SAM store
 
+.DESCRIPTION
+This function takes a user name and a password as input and will verify if the combination is correct. The function returns a boolean based on the result. The script defaults to local user accounts, but a remote computername can be specified in the -ComputerName parameter.
+
+.NOTES   
+Name: Test-LocalCredential
+Author: Jaap Brasser
+Version: 1.0
+DateUpdated: 2013-05-20
+
+.PARAMETER UserName
+The samaccountname of the Local Machine user account
+	
+.PARAMETER Password
+The password of the Local Machine user account
+
+.PARAMETER ComputerName
+The computer on which the local credentials will be verified
+
+.EXAMPLE
+Test-LocalCredential -username jaapbrasser -password Secret01
+
+Description:
+Verifies if the username and password provided are correct on the local machine, returning either true or false based on the result
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [string]$UserName,
+        [string]$ComputerName = $env:COMPUTERNAME,
+        [string]$Password
+    )
+    if (!($UserName) -or !($Password)) {
+        Write-Warning 'Test-LocalCredential: Please specify both user name and password'
+    } else {
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+        $DS = New-Object System.DirectoryServices.AccountManagement.PrincipalContext('machine',$ComputerName)
+        $DS.ValidateCredentials($UserName, $Password)
+    }
+}
+function LocalUserFlags {
+<#
+1  = ADS_UF_SCRIPT                                   = 1         # 0x1          # The logon script is executed. This flag does not work for the ADSI LDAP provider on either read or write operations. For the ADSI WinNT provider, this flag is read-only data, and it cannot be set for user objects.
+2  = ADS_UF_ACCOUNTDISABLE                           = 2         # 0x2          # The user account is disabled. 
+3  = ADS_UF_HOMEDIR_REQUIRED                         = 8         # 0x8          # The home directory is required.
+4  = ADS_UF_LOCKOUT                                  = 16        # 0x10         # The account is currently locked out.
+5  = ADS_UF_PASSWD_NOTREQD                           = 32        # 0x20         # No password is required.
+6  = ADS_UF_PASSWD_CANT_CHANGE                       = 64        # 0x40         # The user cannot change the password. This flag can be read, but not set directly. For more information and a code example that shows how to prevent a user from changing the password, see https://msdn.microsoft.com/en-us/library/aa746508(v=vs.85).aspx.
+7  = ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED          = 128       # 0x80         # The user can send an encrypted password.
+8  = ADS_UF_TEMP_DUPLICATE_ACCOUNT                   = 256       # 0x100        # This is an account for users whose primary account is in another domain. This account provides user access to this domain, but not to any domain that trusts this domain. Also known as a local user account.
+9  = ADS_UF_NORMAL_ACCOUNT                           = 512       # 0x200        # This is a default account type that represents a typical user.
+10 = ADS_UF_INTERDOMAIN_TRUST_ACCOUNT                = 2048      # 0x800        # This is a permit to trust account for a system domain that trusts other domains.
+11 = ADS_UF_WORKSTATION_TRUST_ACCOUNT                = 4096      # 0x1000       # This is a computer account for a Windows or Windows Server that is a member of this domain.
+12 = ADS_UF_SERVER_TRUST_ACCOUNT                     = 8192      # 0x2000       # This is a computer account for a system backup domain controller that is a member of this domain.
+13 = ADS_UF_DONT_EXPIRE_PASSWD                       = 65536     # 0x10000      # When set, the password will not expire on this account.
+14 = ADS_UF_MNS_LOGON_ACCOUNT                        = 131072    # 0x20000      # This is an Majority Node Set (MNS) logon account. With MNS, you can configure a multi-node Windows cluster without using a common shared disk.
+15 = ADS_UF_SMARTCARD_REQUIRED                       = 262144    # 0x40000      # When set, this flag will force the user to log on using a smart card.
+16 = ADS_UF_TRUSTED_FOR_DELEGATION                   = 524288    # 0x80000      # When set, the service account (user or computer account), under which a service runs, is trusted for Kerberos delegation. Any such service can impersonate a client requesting the service. To enable a service for Kerberos delegation, set this flag on the userAccountControl property of the service account.
+17 = ADS_UF_NOT_DELEGATED                            = 1048576   # 0x100000     # When set, the security context of the user will not be delegated to a service even if the service account is set as trusted for Kerberos delegation.
+18 = ADS_UF_USE_DES_KEY_ONLY                         = 2097152   # 0x200000     # Restrict this principal to use only Data Encryption Standard (DES) encryption types for keys.
+19 = ADS_UF_DONT_REQUIRE_PREAUTH                     = 4194304   # 0x400000     # This account does not require Kerberos preauthentication for logon.
+20 = ADS_UF_PASSWORD_EXPIRED                         = 8388608   # 0x800000     # The user password has expired. This flag is created by the system using data from the password last set attribute and the domain policy. It is read-only and cannot be set. To manually set a user password as expired, use the NetUserSetInfo function with the USER_INFO_3 (usri3_password_expired member) or USER_INFO_4 (usri4_password_expired member) structure.
+21 = ADS_UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION   = 16777216  # 0x1000000    # The account is enabled for delegation. This is a security-sensitive setting; accounts with this option enabled should be strictly controlled. This setting enables a service running under the account to assume a client identity and authenticate as that user to other remote servers on the network.
+  #>
+[CmdletBinding()]
+param (
+[Parameter(Mandatory=$true)][string]$type,
+[Parameter(Mandatory=$true)][string]$flag,
+[Parameter(Mandatory=$true)][string]$user
+)
+Log-Write -Messege "LocalUserFlags initialised"
+$FlagTypes = @{
+    "1"="1"
+    "2"="2";
+    "3"="8";
+    "4"="16";
+    "5"="32";
+    "6"="64";
+    "7"="128";
+    "8"="256";
+    "9"="512";
+    "10"="2048";
+    "11"="4096";
+    "12"="8192";
+    "13"="65536";
+    "14"="131072";
+    "15"="262144";
+    "16"="524288";
+    "17"="1048576";
+    "18"="2097152";
+    "19"="4194304";
+    "20"="8388608";
+    "21"="16777216";
+    }
+$flagBit = $FlagTypes.Get_item("$flag")
+
+$objUser = [ADSI]"WinNT://$env:computername/$user"
+
+if ($type -eq "Check") {
+    Log-Write -Messege "Checking if flag '$FlagBit' exists for user account '$user'"
+    if ($objUser.UserFlags[0] -band "$FlagBit") {
+        Log-Write -Messege "Flag '$FlagBit' exists for user account '$user'"
+        return $true
+        } else {
+            Log-Write -Messege "Flag '$FlagBit' doesn't exist for user account '$user'"
+            return $false
+            }
+    }
+
+if ($type -eq "Remove") {
+    Log-Write -Messege "Removing flag '$FlagBit' from user account '$user'"
+    $objUser.invokeSet("userFlags", ($objUser.userFlags[0] -BXOR $FlagBit))
+    $objUser.commitChanges()
+    if (!($objUser.UserFlags[0] -band $FlagBit)) {
+        Log-Write -Messege "Flag '$FlagBit' has been removed from user account '$user'"
+        return $true
+        } else {
+            Log-Error -Messege "Failed to remove flag '$FlagBit' from user account '$user'"
+            return $false
+            }
+    }
+
+if ($type -eq "Add") {
+    Log-Write -Messege "Adding flag '$FlagBit' to user account '$user'"
+    $objUser.invokeSet("UserFlags", ($objUser.UserFlags[0] -BOR $flagBit))
+    $objUser.commitChanges()
+    if ($objUser.UserFlags[0] -band $FlagBit) {
+        Log-Write -Messege "Flag '$FlagBit' has been added to user account '$user'"
+        return $true
+        } else {
+            Log-Error -Messege "Failed to add flag '$FlagBit' to user account '$user'"
+            return $false
+            }
+    }
+}
+#
+# End of 'List functions here'
+#
 
 Try {
 Log-Start
@@ -523,5 +693,5 @@ Log-Finish
 }
 
 Catch {
-# Enter your catch here
+Log-Error -Messege "Catch end of script"
 }

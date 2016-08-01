@@ -6,6 +6,19 @@ REM Setup, general configuration of script
 	set SCRIPTNAME=RUNONCE.bat
 	set COMPANYFOLDER=%SYSTEMDRIVE%\%COMPANYNAME%
 
+REM Setup folders
+	if not exist %COMPANYFOLDER% (md %COMPANYFOLDER%)
+	if not exist %COMPANYFOLDER%\Tools (md %COMPANYFOLDER%\Tools)
+	if not exist %COMPANYFOLDER%\Packages (md %COMPANYFOLDER%\Packages)
+	if not exist %COMPANYFOLDER%\Scripts (md %COMPANYFOLDER%\Scripts)
+	
+	if not exist %COMPANYFOLDER% (
+		echo attempt to create %COMPANYFOLDER% failed
+		exit 1001
+		) else (
+			echo %COMPANYFOLDER% exists
+			)
+		
 REM Setup Logging
 	set LOG=%COMPANYFOLDER%\RUNONCE.txt
 	echo --------------------------------------------------------------------------------------------------->>%LOG%
@@ -16,30 +29,8 @@ REM Setup Logging
 	echo Company Name : %COMPANYNAME%>>%LOG%
 	echo Company Folder : %COMPANYFOLDER%>>%LOG%
 	echo.>>%LOG%
+	
 
-REM Setup folders
-	echo Setting up folders>>%LOG%
-	if not exist %COMPANYFOLDER%\Tools (
-		echo Creating %COMPANYFOLDER%\Tools>>%LOG%
-		md %COMPANYFOLDER%\Tools>>%LOG%
-		) else (
-			echo Not creating %COMPANYFOLDER%\Tools, already exists>>%LOG%
-			)
-
-	if not exist %COMPANYFOLDER%\Packages (
-		echo Creating %COMPANYFOLDER%\Packages>>%LOG%
-		md %COMPANYFOLDER%\Packages>>%LOG%
-		) else (
-			echo Not creating %COMPANYFOLDER%\Packages, already exists>>%LOG%
-			)
-
-	if not exist %COMPANYFOLDER%\Scripts (
-		echo Creating %COMPANYFOLDER%\Scripts>>%LOG%
-		md %COMPANYFOLDER%\Scripts>>%LOG%
-		) else (
-			echo Not creating %COMPANYFOLDER%\Scripts, already exists>>%LOG%
-			)
-	echo.>>%LOG%
 
 REM Create Download Script
 	set DLOAD_SCRIPT=%COMPANYFOLDER%\Scripts\DownloadURL.vbs
@@ -101,11 +92,11 @@ REM If PowerShell 2 is not installed, download and install it.
 		echo Found Powershell, checking what version it is now... >>%LOG%
 		"%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe" -command "exit $PSVersionTable.PSVersion.Major"
 		set PSVer=%errorlevel%
-		echo "Its version %PSVer%" >>%LOG%
+		echo Powershell is version %PSVer% >>%LOG%
 		
 	REM check if powershell is already v2 
 		if %PSVer% geq 2 (
-			echo PowerShell 2 or higher is already installed. >>%LOG%
+			echo PowerShell 2 or higher is already installed. Skipping installation. >>%LOG%
 			goto :endxp
 			)
 
@@ -185,45 +176,31 @@ REM Anything else for XP SP3 goes here
 
 REM Add code here for non XP SP3 specific
 :not_xp
-	echo This computer is NOT XP SP3>>%LOG%
 
+
+	
 REM Set the execution policy for powershell to RemoteSigned from any value
-	echo Setting Powershells ExecutionPolicy to RemoteSigned>>%LOG%
-	REG ADD "HKLM\Software\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell" /v ExecutionPolicy /d RemoteSigned /t REG_SZ /f
-
+echo Setting Powershells ExecutionPolicy to RemoteSigned>>%LOG%
+REG ADD "HKLM\Software\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell" /v ExecutionPolicy /d RemoteSigned /t REG_SZ /f
+if %ERRORLEVEL% == 0 (
+	echo Successfully set Powershells ExecutionPolicy to RemoteSigned>>%LOG%
+	)
+	
+	
 REM Ensure windows passwords are not storing reversable hash's
 echo.>>%LOG%
 echo Ensuring PC is protected against NoLMHash vulverability>>%LOG%
-setlocal
-reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash>>%LOG%
-if not %ERRORLEVEL% == 0 (
-	for /f "tokens=2*" %a in ('reg query HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash') do set "var=%b"
-	if "%var%"=="0x1" (
-		echo PC is already protected>>%LOG%
-		) else (
-			echo Adding NoLMHash protection>>%LOG%
-			reg add HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash /t REG_DWORD /d 0x1>>%LOG%
-			if %ERRORLEVEL% == 0 (
-				echo PC is now protected>>%LOG%
-				) else (
-					echo Failed to set NoLMHash protection>>%LOG%
-					exit 1001
-					)
-				)
-		) else (
-			echo Adding NoLMHash protection>>%LOG%
-			reg add HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash /t REG_DWORD /d 0x1>>%LOG%
-			if %ERRORLEVEL% == 0 (
-				echo PC is now protected>>%LOG%
-				) else (
-					echo Failed to set NoLMHash protection>>%LOG%
-					exit 1001
-					)
-				)
-		
+reg add HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v NoLMHash /t REG_DWORD /d 0x1 /f
+if %ERRORLEVEL% == 0 (
+	echo Either PC was already protected or it is now protected>>%LOG%
+	) else (
+	echo Failed to set NoLMHash>>%LOG%
+	exit 1001
+	)
+echo End of NoLMHash check>>%LOG%
 
 
-REM Cleanup and Exit success
+REM Cleanup and Exit
 	echo Starting the cleanup now >>%LOG%
 	del /q /f %DLOAD_SCRIPT%
 	echo END OF SCRIPT>>%LOG%
